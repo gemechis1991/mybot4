@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kiya Men Salon</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- QR code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --gold: #C9A84C;
+    --dark: #1a1a2e;
+    --mid:  #16213e;
+    --card: #0f3460;
+    --text: #e0e0e0;
+    --green: #4caf78;
+    --red:  #e05555;
+    --purple: #7c3aed;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+    padding: 20px 16px 16px;
+    text-align: center;
+    border-bottom: 2px solid var(--gold);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo-ring {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), #8b6914);
+    margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    box-shadow: 0 0 20px rgba(201,168,76,0.4);
+  }
+  .salon-name { font-size: 20px; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
+  .salon-sub  { font-size: 12px; color: #aaa; margin-top: 2px; }
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; background: var(--mid);
+    border-bottom: 1px solid #333;
+    overflow-x: auto;
+  }
+  .tab {
+    flex: 1; min-width: 0; padding: 12px 4px; text-align: center;
+    font-size: 11px; font-weight: 600; color: #888;
+    cursor: pointer; transition: all .2s;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+  /* ── Panels ── */
+  .panel { display: none; padding: 16px; }
+  .panel.active { display: block; }
+  /* ── Cards ── */
+  .card {
+    background: var(--card);
+    border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    border: 1px solid #1e4a8a;
+  }
+  .card-title { font-size: 13px; color: #aaa; margin-bottom: 6px; }
+  .card-value { font-size: 22px; font-weight: 700; color: var(--gold); }
+  .card-sub   { font-size: 11px; color: #888; margin-top: 2px; }
+  /* ── Stat grid ── */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* ── Best Cutter Banner ── */
+  .best-cutter-banner {
+    background: linear-gradient(135deg, #2d1b00, #1a1a2e);
+    border: 2px solid var(--gold);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .best-cutter-banner::before {
+    content: '';
+    position: absolute; top: -30px; right: -30px;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, rgba(201,168,76,0.15), transparent);
+    border-radius: 50%;
+  }
+  .best-banner-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--gold); margin-bottom: 6px; font-weight: 700;
+  }
+  .best-banner-emoji { font-size: 32px; margin: 4px 0; }
+  .best-banner-name { font-size: 20px; font-weight: 800; color: #fff; }
+  .best-banner-stat { font-size: 12px; color: #aaa; margin-top: 4px; }
+  .best-banner-crown {
+    display: inline-block;
+    background: var(--gold); color: #000;
+    font-size: 10px; font-weight: 800; padding: 3px 10px;
+    border-radius: 20px; margin-top: 8px; letter-spacing: 0.5px;
+  }
+  /* ── Cutter cards ── */
+  .cutter-card {
+    background: var(--card);
+    border-radius: 12px; padding: 14px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+    border: 1px solid #1e4a8a;
+    cursor: pointer; transition: transform .15s, border-color .15s;
+  }
+  .cutter-card:active { transform: scale(0.97); border-color: var(--gold); }
+  .cutter-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), #5a3d0a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .cutter-info { flex: 1; min-width: 0; }
+  .cutter-name { font-weight: 700; font-size: 15px; }
+  .cutter-stat { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .cutter-badge {
+    background: var(--gold); color: #000;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px; flex-shrink: 0;
+  }
+  /* ── QR section ── */
+  .qr-section-title {
+    font-size: 14px; font-weight: 700; color: var(--gold);
+    margin: 16px 0 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .qr-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .qr-card {
+    background: var(--card); border-radius: 12px;
+    padding: 12px; text-align: center; border: 1px solid #1e4a8a;
+    cursor: pointer; transition: border-color .2s;
+  }
+  .qr-card:active { border-color: var(--gold); }
+  .qr-card-name { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  .qr-code-wrapper {
+    background: #fff; border-radius: 8px;
+    padding: 6px; display: inline-block;
+    margin-bottom: 6px;
+  }
+  .qr-code-wrapper canvas, .qr-code-wrapper img { display: block; }
+  .qr-card-emoji { font-size: 18px; margin-bottom: 4px; }
+  .qr-tap-hint { font-size: 10px; color: #888; margin-top: 4px; }
+  /* ── QR Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 100;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--mid); border-radius: 20px;
+    padding: 24px; text-align: center; max-width: 320px;
+    width: 100%; border: 2px solid var(--gold);
+    animation: popIn .25s ease;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; color: var(--gold); }
+  .modal-sub   { font-size: 12px; color: #888; margin-bottom: 16px; }
+  .modal-qr-wrap { background: #fff; border-radius: 12px; padding: 12px; display: inline-block; margin-bottom: 16px; }
+  .modal-close {
+    background: #333; border: none; color: var(--text);
+    padding: 10px 24px; border-radius: 10px; font-size: 14px;
+    cursor: pointer; font-weight: 600;
+  }
+  /* ── Forms ── */
+  .form-label { font-size: 12px; color: #aaa; margin-bottom: 6px; }
+  .form-select, .form-input {
+    width: 100%; padding: 12px; border-radius: 10px;
+    background: var(--mid); border: 1px solid #333;
+    color: var(--text); font-size: 14px; margin-bottom: 14px;
+    appearance: none;
+  }
+  .form-select:focus, .form-input:focus {
+    outline: none; border-color: var(--gold);
+  }
+  /* ── Time slot grid ── */
+  .time-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-bottom: 14px;
+  }
+  .time-slot {
+    background: var(--mid); border: 1px solid #333;
+    border-radius: 8px; padding: 10px 4px;
+    text-align: center; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+    color: var(--text);
+  }
+  .time-slot.selected {
+    background: var(--gold); color: #000;
+    border-color: var(--gold);
+  }
+  .time-slot.unavailable {
+    opacity: 0.35; cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  /* ── Buttons ── */
+  .btn {
+    width: 100%; padding: 14px; border-radius: 10px;
+    border: none; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-gold   { background: linear-gradient(135deg, var(--gold), #8b6914); color: #000; }
+  .btn-green  { background: linear-gradient(135deg, #4caf78, #2e7d4f); color: #fff; }
+  .btn-red    { background: linear-gradient(135deg, #e05555, #a02020); color: #fff; }
+  .btn-ghost  { background: transparent; border: 1px solid var(--gold); color: var(--gold); margin-top: 8px; }
+  .btn-purple { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: #fff; }
+  /* ── Transaction list ── */
+  .tx-item {
+    background: var(--card); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-left: 3px solid var(--gold);
+  }
+  .tx-left .tx-ref   { font-size: 11px; color: #aaa; }
+  .tx-left .tx-cutter { font-weight: 600; font-size: 13px; }
+  .tx-right .tx-amount { font-size: 16px; font-weight: 700; color: var(--gold); }
+  .tx-right .tx-date   { font-size: 10px; color: #888; text-align: right; }
+  .badge-paid { color: var(--green); font-size: 10px; }
+  .badge-rec  { color: #f0a030; font-size: 10px; }
+  /* ── Summary row ── */
+  .split-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid #333; font-size: 13px;
+  }
+  .split-row:last-child { border-bottom: none; }
+  .split-row .label { color: #aaa; }
+  .split-row .value { font-weight: 600; }
+  /* ── Welcome banner ── */
+  .welcome-banner {
+    background: linear-gradient(135deg, #0f3460, #1a1a2e);
+    border: 1px solid var(--gold);
+    border-radius: 14px; padding: 18px; margin-bottom: 16px; text-align: center;
+  }
+  .welcome-banner h2 { color: var(--gold); font-size: 18px; margin-bottom: 6px; }
+  .welcome-banner p  { color: #bbb; font-size: 13px; line-height: 1.5; }
+  /* ── Alert ── */
+  .alert {
+    padding: 12px 14px; border-radius: 10px; margin-bottom: 14px;
+    font-size: 13px; display: none;
+  }
+  .alert.show { display: block; }
+  .alert-success { background: #1a3a28; border: 1px solid var(--green); color: var(--green); }
+  .alert-error   { background: #3a1a1a; border: 1px solid var(--red);   color: var(--red);   }
+  /* ── Section divider ── */
+  .section-divider {
+    font-size: 13px; font-weight: 700; color: #aaa;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin: 16px 0 10px; padding-left: 4px;
+  }
+  /* ── Booking confirmation card ── */
+  .booking-confirm-card {
+    background: linear-gradient(135deg, #0f3460, #1a2a4a);
+    border: 1px solid var(--green); border-radius: 14px;
+    padding: 16px; margin-bottom: 14px; display: none;
+  }
+  .booking-confirm-card.show { display: block; }
+  /* ── Footer ── */
+  .footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    text-align: center; padding: 10px;
+    background: var(--dark); border-top: 1px solid #222;
+    font-size: 11px; color: #555;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-ring">💈</div>
+  <div class="salon-name">KIYA MEN SALON</div>
+  <div class="salon-sub">Premium Barbershop · Addis Ababa</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" id="tab-btn-home" onclick="showTab('home', this)">🏠 Home</div>
+  <div class="tab" id="tab-btn-book" onclick="showTab('book', this)">📅 Book</div>
+  <div class="tab" id="tab-btn-pay" onclick="showTab('pay', this)">💳 Pay</div>
+  <div class="tab" id="tab-btn-qr" onclick="showTab('qr', this)">📲 QR</div>
+</div>
+
+<!-- ─────────────── HOME PANEL ─────────────── -->
+<div class="panel active" id="panel-home">
+  <div class="welcome-banner">
+    <h2>Welcome! 👋</h2>
+    <p id="welcome-text">Loading your profile...</p>
+  </div>
+
+  <!-- Best Cutter of the Week -->
+  <div class="best-cutter-banner" id="best-cutter-banner">
+    <div class="best-banner-title">🏆 Best Cutter of the Week</div>
+    <div class="best-banner-emoji" id="best-emoji">✂️</div>
+    <div class="best-banner-name" id="best-name">—</div>
+    <div class="best-banner-stat" id="best-stat">Loading...</div>
+    <div class="best-banner-crown" id="best-crown">STAR PERFORMER</div>
+  </div>
+
+  <!-- Non-admin stats -->
+  <div id="stats-public" class="stat-grid" style="margin-bottom:12px;">
+    <div class="card">
+      <div class="card-title">Today's Clients</div>
+      <div class="card-value" id="stat-today">—</div>
+      <div class="card-sub">clients served</div>
+    </div>
+    <div class="card">
+      <div class="card-title">This Week</div>
+      <div class="card-value" id="stat-week-clients">—</div>
+      <div class="card-sub">clients this week</div>
+    </div>
+  </div>
+
+  <!-- Admin-only stats -->
+  <div id="stats-admin" class="stat-grid" style="margin-bottom:12px; display:none;">
+    <div class="card">
+      <div class="card-title">Today's Revenue</div>
+      <div class="card-value" id="stat-revenue">—</div>
+      <div class="card-sub">ETB collected</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Owner Share</div>
+      <div class="card-value" id="stat-owner-share">—</div>
+      <div class="card-sub">this week (ETB)</div>
+    </div>
+  </div>
+
+  <div class="section-divider">✂️ Cutter Leaderboard</div>
+  <div id="cutter-list"></div>
+
+  <!-- Quick-action buttons -->
+  <button class="btn btn-purple" style="margin-top:4px;" onclick="showTab('book', document.getElementById('tab-btn-book'))">📅 Book a Haircut</button>
+  <button class="btn btn-ghost" style="margin-top:8px;" onclick="showTab('qr', document.getElementById('tab-btn-qr'))">📲 View QR Codes</button>
+</div>
+
+<!-- ─────────────── BOOK PANEL ─────────────── -->
+<div class="panel" id="panel-book">
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-size:13px; color:#aaa; margin-bottom:4px;">📅 Book a Haircut</div>
+    <div style="font-size:11px; color:#888;">Reserve your spot with your preferred cutter</div>
+  </div>
+  <div id="alert-book" class="alert"></div>
+
+  <div class="form-label">Select Cutter</div>
+  <select class="form-select" id="book-cutter" onchange="onBookCutterChange()">
+    <option value="">— Choose cutter —</option>
+    <option value="yeshi">✂️ Yeshi</option>
+    <option value="tokuma">💈 Tokuma</option>
+    <option value="siraj">🪒 Siraj</option>
+    <option value="abebe">⚡ Abebe</option>
+  </select>
+
+  <div class="form-label">Select Date</div>
+  <input class="form-input" type="date" id="book-date" onchange="onBookDateChange()" oninput="onBookDateChange()">
+
+  <div id="time-slot-section" style="display:none;">
+    <div class="form-label">Select Time Slot</div>
+    <div class="time-grid" id="time-grid"></div>
+  </div>
+
+  <div class="form-label">Your Name</div>
+  <input class="form-input" type="text" id="book-name" placeholder="e.g. Dawit Tadesse">
+
+  <div class="form-label">Phone Number</div>
+  <input class="form-input" type="tel" id="book-phone" placeholder="e.g. 0911234567">
+
+  <div class="form-label">Service</div>
+  <select class="form-select" id="book-service">
+    <option value="haircut">✂️ Haircut — 500 ETB</option>
+    <option value="haircut_beard">✂️🪒 Haircut + Beard — 700 ETB</option>
+    <option value="beard">🪒 Beard Trim — 250 ETB</option>
+    <option value="vip">⭐ VIP Package — 1000 ETB</option>
+  </select>
+
+  <!-- Booking summary -->
+  <div class="booking-confirm-card" id="book-summary">
+    <div style="font-size:12px; color:var(--green); font-weight:700; margin-bottom:10px;">📋 Booking Summary</div>
+    <div class="split-row"><span class="label">Cutter</span><span class="value" id="bs-cutter">—</span></div>
+    <div class="split-row"><span class="label">Date</span><span class="value" id="bs-date">—</span></div>
+    <div class="split-row"><span class="label">Time</span><span class="value" id="bs-time">—</span></div>
+    <div class="split-row"><span class="label">Service</span><span class="value" id="bs-service">—</span></div>
+    <div class="split-row"><span class="label">Price</span><span class="value" style="color:var(--gold)" id="bs-price">500 ETB</span></div>
+  </div>
+
+  <button class="btn btn-green" onclick="confirmBooking()">📅 Confirm Booking</button>
+  <button class="btn btn-ghost" onclick="sendToBot('book')">🤖 Use Bot Instead</button>
+</div>
+
+<!-- ─────────────── PAY PANEL ─────────────── -->
+<div class="panel" id="panel-pay">
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-size:13px; color:#aaa; margin-bottom:4px;">💳 Generate Payment Link</div>
+    <div style="font-size:11px; color:#888;">Create a Chapa checkout link for a client</div>
+  </div>
+  <div id="alert-pay" class="alert"></div>
+  <div class="form-label">Select Cutter</div>
+  <select class="form-select" id="pay-cutter" onchange="updatePaySummary()">
+    <option value="">— Choose cutter —</option>
+    <option value="yeshi">✂️ Yeshi</option>
+    <option value="tokuma">💈 Tokuma</option>
+    <option value="siraj">🪒 Siraj</option>
+    <option value="abebe">⚡ Abebe</option>
+  </select>
+  <div class="form-label">Service</div>
+  <select class="form-select" id="pay-service" onchange="updatePaySummary()">
+    <option value="haircut">✂️ Haircut — 500 ETB</option>
+    <option value="haircut_beard">✂️🪒 Haircut + Beard — 700 ETB</option>
+    <option value="beard">🪒 Beard Trim — 250 ETB</option>
+    <option value="vip">⭐ VIP Package — 1000 ETB</option>
+  </select>
+  <div class="form-label">Tip Amount (ETB)</div>
+  <input class="form-input" type="number" id="pay-tip" placeholder="0" value="0" min="0" oninput="updatePaySummary()">
+  <div id="pay-summary" style="display:none; margin-bottom:14px;" class="card">
+    <div class="split-row"><span class="label">Base Price</span><span class="value" id="ps-base">500 ETB</span></div>
+    <div class="split-row"><span class="label">Tip</span><span class="value" id="ps-tip">0 ETB</span></div>
+    <div class="split-row"><span class="label">Total</span><span class="value" id="ps-total" style="color:var(--gold)">500 ETB</span></div>
+    <div class="split-row"><span class="label">Cutter Share</span><span class="value" id="ps-cutter">250 ETB</span></div>
+    <div class="split-row"><span class="label">Owner Share</span><span class="value" id="ps-owner">250 ETB</span></div>
+  </div>
+  <button class="btn btn-gold" onclick="generatePayLink()">💳 Generate Chapa Link</button>
+  <button class="btn btn-ghost" onclick="sendToBot('pay')">🤖 Use Bot Instead</button>
+</div>
+
+<!-- ─────────────── QR PANEL ─────────────── -->
+<div class="panel" id="panel-qr">
+  <div class="card" style="margin-bottom:16px;">
+    <div style="font-size:13px; color:#aaa; margin-bottom:4px;">📲 Cutter QR Codes</div>
+    <div style="font-size:11px; color:#888;">Tap any QR to enlarge — clients scan to pay</div>
+  </div>
+  <div id="qr-grid" class="qr-grid"></div>
+  <div style="font-size:11px; color:#888; text-align:center; padding: 0 8px 8px;">
+    QR codes link directly to each cutter's payment flow. Clients scan and pay instantly via Chapa.
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="modal-overlay" id="qr-modal" onclick="closeQrModal(event)">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-cutter-name">Cutter</div>
+    <div class="modal-sub">Scan to pay via Chapa</div>
+    <div class="modal-qr-wrap">
+      <div id="modal-qr-code"></div>
+    </div>
+    <div style="font-size:11px; color:#888; margin-bottom:14px;" id="modal-qr-url"></div>
+    <button class="modal-close" onclick="closeQrModal()">✕ Close</button>
+  </div>
+</div>
+
+<div class="footer">Kiya Men Salon · Powered by Telegram Mini App</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+tg.setHeaderColor('#1a1a2e');
+
+const BASE_PRICE = 500;
+const CUTTERS = {
+  yeshi:  { name: "Yeshi",  emoji: "✂️" },
+  tokuma: { name: "Tokuma", emoji: "💈" },
+  siraj:  { name: "Siraj",  emoji: "🪒" },
+  abebe:  { name: "Abebe",  emoji: "⚡" },
+};
+
+const SERVICE_PRICES = {
+  haircut: { label: "Haircut", price: 500 },
+  haircut_beard: { label: "Haircut + Beard", price: 700 },
+  beard: { label: "Beard Trim", price: 250 },
+  vip: { label: "VIP Package", price: 1000 },
+};
+
+const API_BASE = window.location.origin;
+
+// ─── Helpers ───
+function escapeHtml(str) {
+  return (str ?? '').toString().replace(/[&<>"']/g, m =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+}
+
+function showAlert(panel, type, msg) {
+  const el = document.getElementById('alert-' + panel);
+  el.className = `alert alert-${type} show`;
+  el.textContent = msg;
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+function sendToBot(action) { tg.close(); }
+
+// ─── Tab navigation ───
+function showTab(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  else {
+    const btn = document.getElementById('tab-btn-' + name);
+    if (btn) btn.classList.add('active');
+  }
+}
+
+// ─── Owner gate + data fetch ───
+function disableOwnerRestrictedUI() {
+  const adminStats = document.getElementById('stats-admin');
+  if (adminStats) adminStats.style.display = 'none';
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-home').classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-btn-home').classList.add('active');
+}
+
+async function fetchDashboardData() {
+  // FIXED: tg.initData (not tg.initDataUnsafe.initData)
+  const initData = tg.initData;
+  if (!initData) throw new Error('missing_initData');
+
+  const res = await fetch(`${API_BASE}/api/dashboard-data`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `tma ${encodeURIComponent(initData)}`,
+    }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message || err?.error || 'forbidden');
+  }
+  return await res.json();
+}
+
+// ─── Best Cutter of the Week ───
+function renderBestCutter(cutters) {
+  if (!cutters || cutters.length === 0) {
+    document.getElementById('best-name').textContent = 'No data yet';
+    document.getElementById('best-stat').textContent = 'Start recording services!';
+    return;
+  }
+  const sorted = [...cutters].sort((a, b) => (b.weekly_clients || 0) - (a.weekly_clients || 0));
+  const best = sorted[0];
+  const cutterKey = Object.keys(CUTTERS).find(k => CUTTERS[k].name === best.name) || 'yeshi';
+  const cutter = CUTTERS[cutterKey];
+
+  document.getElementById('best-emoji').textContent = cutter ? cutter.emoji : '✂️';
+  document.getElementById('best-name').textContent = best.name;
+
+  const clients = best.weekly_clients || 0;
+  const earned = best.weekly_earnings || 0;
+  document.getElementById('best-stat').textContent =
+    `${clients} clients this week · ${earned} ETB earned`;
+
+  const crown = document.getElementById('best-crown');
+  if (clients >= 20) crown.textContent = '⭐ SUPERSTAR';
+  else if (clients >= 10) crown.textContent = '🔥 TOP PERFORMER';
+  else crown.textContent = '🏆 BEST OF THE WEEK';
+}
+
+function renderBestCutterFromMock(cutterStats) {
+  const entries = Object.entries(cutterStats);
+  if (!entries.length) {
+    document.getElementById('best-name').textContent = 'No data yet';
+    document.getElementById('best-stat').textContent = 'Start booking services!';
+    return;
+  }
+  const sorted = entries.sort((a, b) => (b[1].services || 0) - (a[1].services || 0));
+  const [key, stats] = sorted[0];
+  const cutter = CUTTERS[key];
+  if (!cutter) return;
+
+  document.getElementById('best-emoji').textContent = cutter.emoji;
+  document.getElementById('best-name').textContent = cutter.name;
+  document.getElementById('best-stat').textContent =
+    `${stats.services || 0} clients today`;
+
+  document.getElementById('best-crown').textContent =
+    (stats.services || 0) >= 5 ? '🔥 TOP PERFORMER' : '🏆 BEST TODAY';
+}
+
+function renderOwnerDashboard(data) {
+  const salonName = data?.salon || 'Kiya Men Salon';
+  const recentCount = data?.recent_txs?.length || 0;
+  document.getElementById('welcome-text').textContent =
+    `Owner dashboard · ${salonName}\nRecent Tx: ${recentCount}`;
+
+  const adminStats = document.getElementById('stats-admin');
+  if (adminStats) adminStats.style.display = 'grid';
+
+  document.getElementById('stat-revenue').textContent = (data?.today_revenue || 0) + ' ETB';
+  document.getElementById('stat-owner-share').textContent = (data?.owner_share || 0) + ' ETB';
+  document.getElementById('stat-today').textContent = data?.today_clients || 0;
+  document.getElementById('stat-week-clients').textContent =
+    data?.cutters?.reduce((s, c) => s + (c.weekly_clients || 0), 0) || data?.week_clients || 0;
+
+  const leaderboard = document.getElementById('cutter-list');
+  leaderboard.innerHTML = '';
+
+  const cutters = data?.cutters || [];
+  const sorted = cutters
+    .map(c => ({ key: Object.keys(CUTTERS).find(k => CUTTERS[k].name === c.name) || c.name, ...c }))
+    .sort((a, b) => (b.weekly_clients || 0) - (a.weekly_clients || 0));
+
+  const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+  const weekClients = cutters.reduce((s, c) => s + (c.weekly_clients || 0), 0) || 1;
+
+  sorted.forEach((c, i) => {
+    const services = c.weekly_clients || 0;
+    const earned = c.weekly_earnings || 0;
+    const pct = weekClients ? Math.round((services / weekClients) * 100) : 0;
+    const card = document.createElement('div');
+    card.className = 'cutter-card';
+    card.innerHTML = `
+      <div class="cutter-avatar" style="font-size:24px;">${medals[i] || (i + 1) + '.'}</div>
+      <div class="cutter-info">
+        <div class="cutter-name">${escapeHtml(c.name)}</div>
+        <div class="cutter-stat">${services} clients · ${earned} ETB earned · ${pct}%</div>
+        <div style="background:#1a1a2e;border-radius:4px;height:4px;margin-top:6px;">
+          <div style="background:var(--gold);height:4px;border-radius:4px;width:${pct}%;"></div>
+        </div>
+      </div>
+    `;
+    leaderboard.appendChild(card);
+  });
+
+  renderBestCutter(cutters);
+}
+
+// ─── Mock data ───
+let mockData = {
+  todayServices: 0, todayRevenue: 0,
+  weekClients: 0, ownerShare: 0,
+  cutterStats: {},
+  recentTx: []
+};
+
+// ─── Home: non-admin view ───
+function loadHome() {
+  const user = tg.initDataUnsafe?.user;
+  const greet = user ? `Hi, ${user.first_name}! 👋` : 'Welcome to Kiya Men Salon!';
+  document.getElementById('welcome-text').textContent = greet + '\nYour premium barbershop experience.';
+
+  document.getElementById('stat-today').textContent = mockData.todayServices;
+  document.getElementById('stat-week-clients').textContent = mockData.weekClients;
+
+  const cl = document.getElementById('cutter-list');
+  cl.innerHTML = '';
+  const sorted = Object.entries(mockData.cutterStats).sort((a, b) => b[1].services - a[1].services);
+  sorted.forEach(([key, s], i) => {
+    const c = CUTTERS[key];
+    if (!c) return;
+    const card = document.createElement('div');
+    card.className = 'cutter-card';
+    card.innerHTML = `
+      <div class="cutter-avatar">${c.emoji}</div>
+      <div class="cutter-info">
+        <div class="cutter-name">${c.name}</div>
+        <div class="cutter-stat">${s.services} clients today</div>
+      </div>
+      ${i === 0 ? '<div class="cutter-badge">🏆 #1</div>' : `<div style="color:#888;font-size:13px;">#${i+1}</div>`}
+    `;
+    cl.appendChild(card);
+  });
+
+  if (sorted.length > 0) {
+    renderBestCutterFromMock(mockData.cutterStats);
+  } else {
+    // Default placeholder while loading
+    document.getElementById('best-name').textContent = 'Loading...';
+    document.getElementById('best-stat').textContent = 'Fetching weekly stats...';
+  }
+
+  // Try to load real data from API
+  if (tg.initData) {
+    fetchDashboardData()
+      .then(data => renderOwnerDashboard(data))
+      .catch(() => { /* not owner or no API — stay on mock view */ });
+  }
+}
+
+// ─── Pay: summary update ───
+function updatePaySummary() {
+  const serviceKey = document.getElementById('pay-service').value;
+  const svc = SERVICE_PRICES[serviceKey] || SERVICE_PRICES['haircut'];
+  const basePrice = svc.price;
+  const tip = parseInt(document.getElementById('pay-tip').value) || 0;
+  const total = basePrice + tip;
+  const cutterShare = Math.floor(basePrice / 2) + tip;
+  const ownerShare = basePrice - Math.floor(basePrice / 2);
+  document.getElementById('ps-base').textContent  = basePrice + ' ETB';
+  document.getElementById('ps-tip').textContent   = tip + ' ETB';
+  document.getElementById('ps-total').textContent  = total + ' ETB';
+  document.getElementById('ps-cutter').textContent = cutterShare + ' ETB';
+  document.getElementById('ps-owner').textContent  = ownerShare + ' ETB';
+  const sel = document.getElementById('pay-cutter').value;
+  document.getElementById('pay-summary').style.display = sel ? 'block' : 'none';
+}
+
+// ─── Generate Chapa Link (FIXED) ───
+function generatePayLink() {
+  const cutter  = document.getElementById('pay-cutter').value;
+  const service = document.getElementById('pay-service').value;
+  const tip     = parseInt(document.getElementById('pay-tip').value) || 0;
+  if (!cutter) {
+    showAlert('pay', 'error', '⚠️ Please select a cutter.');
+    return;
+  }
+
+  const payload = { action: 'pay', cutter, service, tip };
+
+  try {
+    tg.sendData(JSON.stringify(payload));
+    showAlert('pay', 'success', '✅ Request sent! Check your Telegram chat for the payment link.');
+  } catch (e) {
+    showAlert('pay', 'error', '⚠️ Could not send data. Make sure you opened this via Telegram.');
+  }
+}
+
+// ─────────────────────────────────────────
+// ─── QR CODE GENERATION ───
+// ─────────────────────────────────────────
+let modalQrInstance = null;
+
+function getPayUrl(cutterKey) {
+  // Deep link into bot pay flow, or direct Chapa link
+  const botUsername = 'KiyaSalonBot'; // Update to your bot's username
+  return `https://t.me/${botUsername}?start=pay_${cutterKey}`;
+}
+
+function buildQrCodes() {
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+
+  Object.entries(CUTTERS).forEach(([key, cutter]) => {
+    const url = getPayUrl(key);
+
+    const col = document.createElement('div');
+    col.className = 'qr-card';
+    col.onclick = () => openQrModal(key, cutter, url);
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'qr-card-name';
+    nameEl.textContent = cutter.emoji + ' ' + cutter.name;
+
+    const emojiEl = document.createElement('div');
+    emojiEl.className = 'qr-card-emoji';
+    emojiEl.textContent = '';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'qr-code-wrapper';
+    wrap.id = `qr-${key}`;
+
+    const hint = document.createElement('div');
+    hint.className = 'qr-tap-hint';
+    hint.textContent = 'Tap to enlarge';
+
+    col.appendChild(nameEl);
+    col.appendChild(wrap);
+    col.appendChild(hint);
+    grid.appendChild(col);
+
+    // Generate QR code
+    try {
+      new QRCode(wrap, {
+        text: url,
+        width: 110,
+        height: 110,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    } catch(e) {
+      wrap.innerHTML = '<div style="color:#888;font-size:10px;padding:8px;">QR unavailable</div>';
+    }
+  });
+}
+
+function openQrModal(key, cutter, url) {
+  document.getElementById('modal-cutter-name').textContent = cutter.emoji + ' ' + cutter.name;
+  document.getElementById('modal-qr-url').textContent = url;
+
+  const modalQrDiv = document.getElementById('modal-qr-code');
+  modalQrDiv.innerHTML = '';
+
+  if (modalQrInstance) {
+    try { modalQrInstance.clear(); } catch(e) {}
+    modalQrInstance = null;
+  }
+
+  try {
+    modalQrInstance = new QRCode(modalQrDiv, {
+      text: url,
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+  } catch(e) {
+    modalQrDiv.textContent = 'QR unavailable';
+  }
+
+  document.getElementById('qr-modal').classList.add('show');
+}
+
+function closeQrModal(e) {
+  if (!e || e.target === document.getElementById('qr-modal')) {
+    document.getElementById('qr-modal').classList.remove('show');
+  }
+}
+
+// ─────────────────────────────────────────
+// ─── BOOKING ───
+// ─────────────────────────────────────────
+
+const TIME_SLOTS = [
+  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+  '11:00', '11:30', '12:00', '13:00', '13:30', '14:00',
+  '14:30', '15:00', '15:30', '16:00', '16:30', '17:00',
+];
+
+let selectedTimeSlot = null;
+
+// Set default date to today
+function initBookingDate() {
+  const today = new Date();
+  const yyyy  = today.getFullYear();
+  const mm    = String(today.getMonth() + 1).padStart(2, '0');
+  const dd    = String(today.getDate()).padStart(2, '0');
+  document.getElementById('book-date').value = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('book-date').min = `${yyyy}-${mm}-${dd}`;
+}
+
+function onBookCutterChange() {
+  updateBookingSummary();
+}
+
+function onBookDateChange() {
+  const date = document.getElementById('book-date').value;
+  const cutter = document.getElementById('book-cutter').value;
+  if (!date) return;
+
+  selectedTimeSlot = null;
+  const section = document.getElementById('time-slot-section');
+  section.style.display = 'block';
+  buildTimeSlots(cutter, date);
+  updateBookingSummary();
+}
+
+function buildTimeSlots(cutter, date) {
+  const grid = document.getElementById('time-grid');
+  grid.innerHTML = '';
+
+  // Simulate some slots as "unavailable" based on cutter+date (deterministic mock)
+  const seed = (cutter || '').charCodeAt(0) + new Date(date).getDate();
+  const unavailable = new Set(TIME_SLOTS.filter((_, i) => (i + seed) % 4 === 0));
+
+  TIME_SLOTS.forEach(slot => {
+    const div = document.createElement('div');
+    div.className = 'time-slot' + (unavailable.has(slot) ? ' unavailable' : '');
+    div.textContent = slot;
+    if (!unavailable.has(slot)) {
+      div.onclick = () => selectSlot(slot, div);
+    }
+    grid.appendChild(div);
+  });
+}
+
+function selectSlot(slot, el) {
+  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTimeSlot = slot;
+  updateBookingSummary();
+}
+
+function updateBookingSummary() {
+  const cutterKey = document.getElementById('book-cutter').value;
+  const date = document.getElementById('book-date').value;
+  const serviceKey = document.getElementById('book-service').value;
+  const summary = document.getElementById('book-summary');
+
+  if (!cutterKey || !date || !selectedTimeSlot) {
+    summary.classList.remove('show');
+    return;
+  }
+
+  const cutter = CUTTERS[cutterKey];
+  const svc = SERVICE_PRICES[serviceKey];
+  const dateObj = new Date(date + 'T00:00:00');
+  const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  document.getElementById('bs-cutter').textContent = cutter ? (cutter.emoji + ' ' + cutter.name) : cutterKey;
+  document.getElementById('bs-date').textContent   = dateStr;
+  document.getElementById('bs-time').textContent   = selectedTimeSlot;
+  document.getElementById('bs-service').textContent = svc ? svc.label : serviceKey;
+  document.getElementById('bs-price').textContent  = svc ? (svc.price + ' ETB') : '500 ETB';
+
+  summary.classList.add('show');
+}
+
+function confirmBooking() {
+  const cutter  = document.getElementById('book-cutter').value;
+  const date    = document.getElementById('book-date').value;
+  const name    = document.getElementById('book-name').value.trim();
+  const phone   = document.getElementById('book-phone').value.trim();
+  const service = document.getElementById('book-service').value;
+
+  if (!cutter)          { showAlert('book', 'error', '⚠️ Please select a cutter.');     return; }
+  if (!date)            { showAlert('book', 'error', '⚠️ Please select a date.');        return; }
+  if (!selectedTimeSlot){ showAlert('book', 'error', '⚠️ Please select a time slot.');   return; }
+  if (!name)            { showAlert('book', 'error', '⚠️ Please enter your name.');      return; }
+  if (!phone)           { showAlert('book', 'error', '⚠️ Please enter your phone number.'); return; }
+
+  const payload = {
+    action: 'book',
+    cutter,
+    date,
+    time: selectedTimeSlot,
+    client_name: name,
+    client_phone: phone,
+    service,
+  };
+
+  try {
+    if (!tg || !tg.sendData) throw new Error('Telegram not available');
+    tg.sendData(JSON.stringify(payload));
+    showAlert('book', 'success', `✅ Booking sent! ${CUTTERS[cutter]?.name} will be ready at ${selectedTimeSlot} on ${date}.`);
+    // Reset form
+    document.getElementById('book-cutter').value = '';
+    document.getElementById('book-name').value = '';
+    document.getElementById('book-phone').value = '';
+    selectedTimeSlot = null;
+    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+    document.getElementById('book-summary').classList.remove('show');
+    document.getElementById('time-slot-section').style.display = 'none';
+  } catch(e) {
+    showAlert('book', 'error', '⚠️ Could not send booking. Please try via the bot: /book');
+  }
+}
+
+// ─── Init ───
+initBookingDate();
+loadHome();
+
+// Defer QR code generation until after QRCode library is fully loaded
+if (typeof QRCode !== 'undefined') {
+  buildQrCodes();
+} else {
+  window.addEventListener('load', buildQrCodes);
+}
+</script>
+</body>
+</html>
